@@ -8,11 +8,6 @@ output "storage_account_name" {
   value       = azurerm_storage_account.adls.name
 }
 
-output "storage_account_name" {
-  description = "nombre del storage account"
-  value       = azurerm_storage_account.adls.name
-}
-
 output "bronze_container_name" {
   description = "nombre del contenedor bronze"
   value       = azurerm_storage_container.bronze.name
