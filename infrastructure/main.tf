@@ -43,7 +43,7 @@ resource "azurerm_storage_management_policy" "lifecycle" {
   storage_account_id = azurerm_storage_account.datalake.id
   rule {
     name   = "bronze-policy"
-    enable = true
+    enabled = true
     filters {
       prefix_match = ["bronze/"]
       blob_types   = ["blockBlob"]
