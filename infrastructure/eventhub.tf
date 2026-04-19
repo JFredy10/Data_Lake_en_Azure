@@ -1,4 +1,4 @@
-## generador de eventos
+## event generator
 resource "azurerm_eventhub_namespace" "evh_namespace" {
   name                = var.eventhub_namespace_name
   resource_group_name = azurerm_resource_group.main.name

@@ -19,10 +19,10 @@ resource "azurerm_storage_account" "datalake" {
 	account_tier             = "Standard"
 	account_replication_type = "LRS"
 	account_kind             = "StorageV2"
-	is_hns_enabled           = "true" # activar el hierarchical namespace
+	is_hns_enabled           = "true" # activate hierarchical namespace
 }
 
-## contenedores para la arquitectura medallón
+## medallion arch containers
 resource "azurerm_storage_data_lake_gen2_filesystem" "bronze" {
   name               = "bronze"
   storage_account_id = azurerm_storage_account.datalake.id
@@ -38,7 +38,7 @@ resource "azurerm_storage_data_lake_gen2_filesystem" "gold" {
   storage_account_id = azurerm_storage_account.datalake.id
 }
 
-## Lifecycle policy para contenedor bronce
+## Lifecycle policy for bronze container
 resource "azurerm_storage_management_policy" "lifecycle" {
   storage_account_id = azurerm_storage_account.datalake.id
   rule {
