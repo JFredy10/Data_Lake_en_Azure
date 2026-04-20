@@ -7,37 +7,36 @@ Plataforma de datos sobre Azure: un Data Lake en Azure Data Lake Storage Gen2 es
 El pipeline CI/CD en Azure Pipelines automatiza el despliegue de infraestructura y transformaciones de datos.
 
 
-## Requirements
+## Requerimientos
 - Azure account
 - Azure cli
 - Terraform
 - Python 3+
 
-## Running
+## Ejecutando
 
 `az login`
 
 `terraform init`
 `terraform apply`
 
-Stream analytics are created and stopped explicitly with the Azure CLI stream analytics extension (or in Azure portal), see: https://github.com/Azure/azure-cli-extensions/blob/main/src/stream-analytics/README.md
+Los Stream analytics se crean y se detienen de manera explicita con la extensión de stream-analytics de la CLI de Azure o en el portal de Azure: https://github.com/Azure/azure-cli-extensions/blob/main/src/stream-analytics/README.md
 
 `az stream-analytics job start --resource-group [GROUP] --name [NAME] --output-start-mode JobStartTime`
 
-Stopping:
+detener stream-analytics:
 `az stream-analytics job stop --resource-group [GROUP] --name [NAME]`
 
-Generator script:
+para el script generator:
 `pip install -r requirements.txt`
 
-Examples of running generator locally:
+el script se puede ejecutar de forma local para probar, por ejemplo:
 `python scripts/generator.py --mode stdout --interval 0.01`
 `python scripts/generator.py --mode stdout --count 1000 --interval 1`
 
-To run with Azure set EVENT_HUB_CONNECTION_STRING and EVENTHUB_NAME, can be taken from terraform output with `terraform output`
-
+Para generar eventos y enviarlos a Azure, se debe configurar las variables de entorno EVENT_HUB_CONNECTION_STRING y EVENTHUB_NAME en el sistema, EVENT_HUB_CONNECTION_STRING se puede obtener ejecutando: `terraform output eventhub_connection_string`
 
 `python scripts/generator.py --mode eventhub --interval 1`
 
-To monitor what is happening, in Azure portal
+Se puede monitorear lo el proceso usando el portal de Azure.
 
