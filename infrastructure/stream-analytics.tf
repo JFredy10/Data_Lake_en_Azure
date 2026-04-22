@@ -11,7 +11,7 @@ resource "azurerm_stream_analytics_job" "analytics" {
   streaming_units                          = 3
   sku_name                                 = "Standard"
 
-  transformation_query = file("${path.module}/query.saql")
+  transformation_query = file("${path.module}/query.sql")
 }
 
 ## stream analytics inputs
