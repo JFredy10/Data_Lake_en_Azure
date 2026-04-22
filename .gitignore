@@ -1,20 +1,37 @@
-# Archivos y carpetas generados por Terraform (No subir a GitHub)
+# Archivos y carpetas generados por Terraform
 .terraform/
-*.tfstate
-*.tfstate.backup
 .terraform.tfstate.lock.info
 .terraform.lock.hcl
 
-# Python / Scripts
+*.tfstate
+*.tfstate.*
+
+*.tfvars
+*.tfvars.json
+
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+.terraform.tfstate.lock.info
+.terraformrc
+terraform.rc
+
+crash.log
+crash.*.log
+
+# Python related
 __pycache__/
 *.pyc
 *.pyo
 venv/
 .env
-
-# Jupyter Notebooks
 .ipynb_checkpoints/
 
-# VS Code / Editores
+# IDEs
 .vscode/
 .idea/
+
+.gitconfig
+

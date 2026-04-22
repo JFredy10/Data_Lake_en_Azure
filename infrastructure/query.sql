@@ -1,8 +1,10 @@
--- Consulta SAQL para Stream Analytics
--- Objetivo: Computar el valor agregado por minuto (Tumbling Window)
--- y generar alertas sobre una métrica de alta prioridad (mayor a 45 grados).
+-- compute average by minute with TumblingWindow
+-- and generate alerts if temperature goes abobe 45 degrees
 
--- 1. Escribir resultados agregados en la capa Silver
+-- silver-output and evh-input-simulation come from resources stream_analytics_stream...
+-- on stream-analytics.tf
+
+-- write on silver layer
 SELECT
     System.Timestamp() AS window_end,
     device_id,
@@ -11,14 +13,14 @@ SELECT
     AVG(humidity) AS avg_humidity,
     COUNT(*) as total_events_in_minute
 INTO
-    [silver-telemetry-output]
+    [silver-output]
 FROM
-    [eh-iot-input] TIMESTAMP BY timestamp
+    [evh-input-simulation] TIMESTAMP BY timestamp
 GROUP BY
     device_id,
     TumblingWindow(minute, 1)
 
--- 2. Detección de anomalía/Alerta: Temperatura supera los 45 grados
+-- write alerts
 SELECT
     System.Timestamp() AS event_time,
     device_id,
@@ -27,6 +29,7 @@ SELECT
 INTO
     [silver-alert-output]
 FROM
-    [eh-iot-input] TIMESTAMP BY timestamp
+    [evh-input-simulation] TIMESTAMP BY timestamp
 WHERE
     temperature > 45.0
+
