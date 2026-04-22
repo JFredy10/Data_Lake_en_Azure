@@ -15,8 +15,8 @@ resource "azurerm_eventhub" "hub" {
   namespace_name      = azurerm_eventhub_namespace.eh_namespace.name
   resource_group_name = azurerm_resource_group.rg.name
 
-  partition_count   = 4
-  message_retention = 7
+  partition_count   = 1 # Solo 1 partición para cuentas gratuitas/estudiante
+  message_retention = 1 # 1 día de retención para minimizar recursos
 }
 
 resource "azurerm_eventhub_authorization_rule" "eh_auth" {

@@ -1,0 +1,4 @@
+device_id,timestamp,temperature,humidity
+Device_001,2026-04-22T01:00:00Z,25.5,60.2
+Device_002,2026-04-22T01:01:00Z,27.1,58.9
+Device_003,2026-04-22T01:02:00Z,29.3,55.7

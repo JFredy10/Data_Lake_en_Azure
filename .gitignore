@@ -18,3 +18,11 @@ venv/
 # VS Code / Editores
 .vscode/
 .idea/
+.tfstate
+.tfstate.backup
+*.tfvars
+.terraform/
+.env
+*.log
+credentials*
+*.bak

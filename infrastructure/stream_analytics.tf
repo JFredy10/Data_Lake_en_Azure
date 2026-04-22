@@ -11,7 +11,7 @@ resource "azurerm_stream_analytics_job" "asa_job" {
   events_out_of_order_max_delay_in_seconds = 50
   events_out_of_order_policy               = "Adjust"
   output_error_policy                      = "Drop"
-  streaming_units                          = 3
+  streaming_units                          = 1 # Solo 1 streaming unit para cuentas gratuitas/estudiante
 
   transformation_query = file("${path.module}/../stream_analytics/query.saql")
 }

@@ -1,0 +1,56 @@
+{
+  "name": "Pipeline_Daily_Batch_Bronze_to_Gold",
+  "properties": {
+    "activities": [
+      {
+        "name": "Copy_CSV_to_Bronze",
+        "type": "Copy",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "01:00:00",
+          "retry": 3
+        },
+        "inputs": [
+          { "referenceName": "DS_Source_CSV", "type": "DatasetReference" }
+        ],
+        "outputs": [
+          { "referenceName": "DS_Bronze_Parquet", "type": "DatasetReference" }
+        ],
+        "typeProperties": {
+          "source": { "type": "DelimitedTextSource" },
+          "sink": { "type": "ParquetSink", "storeSettings": { "type": "AzureBlobFSWriteSettings" } }
+        }
+      },
+      {
+        "name": "Transform_Bronze_to_Silver",
+        "type": "ExecuteDataFlow",
+        "dependsOn": [
+          { "activity": "Copy_CSV_to_Bronze", "dependencyConditions": ["Succeeded"] }
+        ],
+        "typeProperties": {
+          "dataflow": {
+            "referenceName": "DF_Clean_Nulls_Dates",
+            "type": "DataFlowReference"
+          },
+          "compute": {
+            "coreCount": 8,
+            "computeType": "General"
+          }
+        }
+      },
+      {
+        "name": "Aggregate_Silver_to_Gold",
+        "type": "ExecuteDataFlow",
+        "dependsOn": [
+          { "activity": "Transform_Bronze_to_Silver", "dependencyConditions": ["Succeeded"] }
+        ],
+        "typeProperties": {
+          "dataflow": {
+            "referenceName": "DF_Gold_Aggregations",
+            "type": "DataFlowReference"
+          }
+        }
+      }
+    ]
+  }
+}
