@@ -22,6 +22,7 @@ A continuación se detalla el desglose y propósito técnico de cada una de las 
 
 ---
 
+
 ## 🚀 Flujo de Datos y Arquitectura (Lambda)
 
 El siguiente diagrama ilustra cómo viajan los datos desde su origen hasta el modelo de consumo analítico una vez la plataforma está operando:
