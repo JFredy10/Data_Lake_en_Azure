@@ -2,7 +2,7 @@
 # Azure Data Factory Base
 # ---------------------------------------------
 resource "azurerm_data_factory" "adf" {
-  name                = "adf-dataplatform-dev-cx99"
+  name                = "adf-dataplatform-dev-cx99-v2"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 
@@ -53,7 +53,8 @@ resource "azurerm_data_factory_pipeline" "batch_pipeline" {
   name            = "Pipeline_Daily_Batch_Bronze_to_Gold"
   data_factory_id = azurerm_data_factory.adf.id
 
-  # Definición importada / leida del JSON para simplificar estructura en TF
-  # Se crea un framework base. Las actividades complejas (como Mapping Data Flows) 
-  # habitualmente se agregan a través de integración de Repositorios en ADF o JSON
+  # Decodificamos el archivo original y extraemos solo el array "activities"
+  activities_json = jsonencode(
+    jsondecode(file("${path.module}/../data_factory/batch_pipeline.json")).properties.activities
+  )
 }

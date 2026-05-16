@@ -1,5 +1,4 @@
 ﻿# Comentado para la Entrega 1 por restricciones de region
-/*
 resource "azurerm_synapse_workspace" "synapse_ws" {
   name                                 = "syn-ws-dataplatform-dev"
   resource_group_name                  = azurerm_resource_group.rg.name
@@ -21,7 +20,6 @@ resource "azurerm_role_assignment" "synapse_blob_contributor" {
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_synapse_workspace.synapse_ws.identity.0.principal_id
 }
-*/
 
 # ---------------------------------------------
 # Azure Monitor / Logs para Synapse
@@ -33,7 +31,6 @@ resource "azurerm_log_analytics_workspace" "law" {
   sku                 = "PerGB2018"
 }
 
-/*
 resource "azurerm_monitor_diagnostic_setting" "synapse_diag" {
   name                       = "synapse-diagnostic-settings"
   target_resource_id         = azurerm_synapse_workspace.synapse_ws.id
@@ -56,4 +53,3 @@ resource "azurerm_monitor_diagnostic_setting" "synapse_diag" {
     enabled  = true
   }
 }
-*/

@@ -13,7 +13,7 @@ variable "resource_group_name" {
 variable "storage_account_name" {
   description = "Nombre del Storage Account (Data Lake Gen2). Debe ser globalmente único."
   type        = string
-  default     = "stdataplatformdevcx99"
+  default     = "stdataplatformdevcx99v2"
 }
 
 variable "eventhub_namespace_name" {

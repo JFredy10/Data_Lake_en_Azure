@@ -10,7 +10,7 @@ SELECT
     *
 FROM
     OPENROWSET(
-        BULK 'https://stdataplatformdev01.dfs.core.windows.net/gold/telemetry/**/*.parquet',
+        BULK 'https://stdataplatformdevcx99v2.dfs.core.windows.net/gold/telemetry/**/*.parquet',
         FORMAT = 'PARQUET'
     ) AS [result];
 GO
@@ -20,7 +20,7 @@ SELECT
     *
 FROM
     OPENROWSET(
-        BULK 'https://stdataplatformdev01.dfs.core.windows.net/silver/alerts/**/*.json',
+        BULK 'https://stdataplatformdevcx99v2.dfs.core.windows.net/silver/alerts/**/*.json',
         FORMAT = 'CSV', -- A pesar de ser JSON, OPENROWSET los lee como CSV delimitado de campo único donde hay que aplicar PARSE_JSON 
         FIELDQUOTE = '0x0b',
         FIELDTERMINATOR ='0x0b',
