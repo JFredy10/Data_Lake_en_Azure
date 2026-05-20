@@ -28,24 +28,24 @@ El siguiente diagrama ilustra cómo viajan los datos desde su origen hasta el mo
 
 ```mermaid
 graph TD
-    subgraph 1. Ingesta
+    subgraph "1. Ingesta"
         A[Generador IoT Python] -->|Telemetría E2E| B(Azure Event Hubs)
         C[Fuentes Batch / CSV] -->|Carga de Origen| D[(ADLS Bronze)]
     end
 
-    subgraph 2. Procesamiento Streaming 'Hot Path'
+    subgraph "2. Procesamiento Streaming 'Hot Path'"
         B -->|Eventos Friccionales| E{Stream Analytics}
         E -->|Anomalías > 45°C| F[(ADLS Silver Alertas)]
         E -->|Ventanas de 1 min| G[(ADLS Silver Telemetry)]
     end
 
-    subgraph 3. Procesamiento Batch 'Cold Path'
+    subgraph "3. Procesamiento Batch 'Cold Path'"
         D -.->|Triggers / Copy Activity| H[Azure Data Factory]
         H -.->|DataFlow Transforma| I[(ADLS Silver Limpio)]
         I -.->|DataFlow Agrega| J[(ADLS Gold Parquet)]
     end
     
-    subgraph 4. Analítica y Consumo
+    subgraph "4. Analítica y Consumo"
         F -->|Consulta| K[Synapse Serverless SQL]
         J -->|Consulta| K
         G -->|Consulta| K
@@ -53,14 +53,14 @@ graph TD
     end
 
     classDef ingesta fill:#e1f5fe,stroke:#311b92,stroke-width:2px;
-    classDef hot path fill:#ffebee,stroke:#b71c1c,stroke-width:2px;
-    classDef cold path fill:#e8f5e9,stroke:#0d47a1,stroke-width:2px;
+    classDef hotPath fill:#ffebee,stroke:#b71c1c,stroke-width:2px;
+    classDef coldPath fill:#e8f5e9,stroke:#0d47a1,stroke-width:2px;
     classDef storage fill:#fff8e1,stroke:#f57f17,stroke-width:2px;
     classDef analytics fill:#f3e5f5,stroke:#1b5e20,stroke-width:2px;
     
     class A,B,C ingesta;
-    class E,F,G hot path;
-    class D,I,J,H cold path;
+    class E,F,G hotPath;
+    class D,I,J,H coldPath;
     class K,L analytics;
 ```
 
