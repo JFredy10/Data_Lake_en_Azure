@@ -57,4 +57,127 @@ resource "azurerm_data_factory_pipeline" "batch_pipeline" {
   activities_json = jsonencode(
     jsondecode(file("${path.module}/../data_factory/batch_pipeline.json")).properties.activities
   )
+
+  depends_on = [
+    azurerm_data_factory_dataset_delimited_text.ds_csv,
+    azurerm_data_factory_dataset_parquet.ds_parquet,
+    azurerm_data_factory_dataset_parquet.ds_silver,
+    azurerm_data_factory_dataset_parquet.ds_gold,
+    azurerm_data_factory_data_flow.df_clean,
+    azurerm_data_factory_data_flow.df_gold
+  ]
+}
+
+resource "azurerm_data_factory_dataset_delimited_text" "ds_csv" {
+  name                = "DS_Source_CSV"
+  data_factory_id     = azurerm_data_factory.adf.id
+  linked_service_name = azurerm_data_factory_linked_service_data_lake_storage_gen2.adf_ls_adls.name
+  azure_blob_fs_location {
+    file_system = "bronze"
+    filename    = "source.csv"
+  }
+}
+
+resource "azurerm_data_factory_dataset_parquet" "ds_parquet" {
+  name                = "DS_Bronze_Parquet"
+  data_factory_id     = azurerm_data_factory.adf.id
+  linked_service_name = azurerm_data_factory_linked_service_data_lake_storage_gen2.adf_ls_adls.name
+  azure_blob_fs_location {
+    file_system = "bronze"
+    filename    = "output.parquet"
+  }
+}
+
+resource "azurerm_data_factory_dataset_parquet" "ds_silver" {
+  name                = "DS_Silver_Parquet"
+  data_factory_id     = azurerm_data_factory.adf.id
+  linked_service_name = azurerm_data_factory_linked_service_data_lake_storage_gen2.adf_ls_adls.name
+  azure_blob_fs_location {
+    file_system = "silver"
+    filename    = "data.parquet"
+  }
+}
+
+resource "azurerm_data_factory_dataset_parquet" "ds_gold" {
+  name                = "DS_Gold_Parquet"
+  data_factory_id     = azurerm_data_factory.adf.id
+  linked_service_name = azurerm_data_factory_linked_service_data_lake_storage_gen2.adf_ls_adls.name
+  azure_blob_fs_location {
+    file_system = "gold"
+    filename    = "data.parquet"
+  }
+}
+
+resource "azurerm_data_factory_data_flow" "df_clean" {
+  name            = "DF_Clean_Nulls_Dates"
+  data_factory_id = azurerm_data_factory.adf.id
+
+  source {
+    name = "BronzeSource"
+    dataset {
+      name = azurerm_data_factory_dataset_parquet.ds_parquet.name
+    }
+  }
+
+  sink {
+    name = "SilverSink"
+    dataset {
+      name = azurerm_data_factory_dataset_parquet.ds_silver.name
+    }
+  }
+
+  script = <<EOT
+source(allowSchemaDrift: true,
+	validateSchema: false,
+	ignoreNoFilesFound: false,
+	format: 'parquet') ~> BronzeSource
+BronzeSource derive(timestamp = toTimestamp(timestamp, 'yyyy-MM-dd\'T\'HH:mm:ss\'Z\''),
+		temperature = iif(isNull(temperature), 0.0, toDouble(temperature)),
+		humidity = iif(isNull(humidity), 0.0, toDouble(humidity))) ~> CleanData
+CleanData sink(allowSchemaDrift: true,
+	validateSchema: false,
+	format: 'parquet',
+	umask: 0022,
+	preCommands: [],
+	postCommands: [],
+	skipDuplicateMapInputs: true,
+	skipDuplicateMapOutputs: true) ~> SilverSink
+EOT
+}
+
+resource "azurerm_data_factory_data_flow" "df_gold" {
+  name            = "DF_Gold_Aggregations"
+  data_factory_id = azurerm_data_factory.adf.id
+
+  source {
+    name = "SilverSource"
+    dataset {
+      name = azurerm_data_factory_dataset_parquet.ds_silver.name
+    }
+  }
+
+  sink {
+    name = "GoldSink"
+    dataset {
+      name = azurerm_data_factory_dataset_parquet.ds_gold.name
+    }
+  }
+
+  script = <<EOT
+source(allowSchemaDrift: true,
+	validateSchema: false,
+	ignoreNoFilesFound: false,
+	format: 'parquet') ~> SilverSource
+SilverSource aggregate(groupBy(device_id),
+	avg_temperature = round(avg(temperature), 2),
+	max_humidity = round(max(humidity), 2)) ~> AggregateData
+AggregateData sink(allowSchemaDrift: true,
+	validateSchema: false,
+	format: 'parquet',
+	umask: 0022,
+	preCommands: [],
+	postCommands: [],
+	skipDuplicateMapInputs: true,
+	skipDuplicateMapOutputs: true) ~> GoldSink
+EOT
 }

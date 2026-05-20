@@ -27,13 +27,17 @@
         "dependsOn": [
           { "activity": "Copy_CSV_to_Bronze", "dependencyConditions": ["Succeeded"] }
         ],
+        "policy": {
+          "timeout": "01:00:00",
+          "retry": 3
+        },
         "typeProperties": {
           "dataflow": {
             "referenceName": "DF_Clean_Nulls_Dates",
             "type": "DataFlowReference"
           },
           "compute": {
-            "coreCount": 8,
+            "coreCount": 4,
             "computeType": "General"
           }
         }
@@ -44,10 +48,18 @@
         "dependsOn": [
           { "activity": "Transform_Bronze_to_Silver", "dependencyConditions": ["Succeeded"] }
         ],
+        "policy": {
+          "timeout": "01:00:00",
+          "retry": 3
+        },
         "typeProperties": {
           "dataflow": {
             "referenceName": "DF_Gold_Aggregations",
             "type": "DataFlowReference"
+          },
+          "compute": {
+            "coreCount": 4,
+            "computeType": "General"
           }
         }
       }

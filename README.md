@@ -72,3 +72,5 @@ graph TD
 
 ---
 *Si deseas desplegar o interactuar con este proyecto, consulta el documento `docs/deployment_guide.md`.*
+
+> ⚠️ **IMPORTANTE PARA REPRODUCIR EL PROYECTO:** Si vas a clonar y desplegar este proyecto en tu propia cuenta de Azure (sea de estudiante o personal), debes abrir el archivo `infrastructure/variables.tf` y cambiar el nombre por defecto de la variable `storage_account_name`. Azure exige que los nombres de las Cuentas de Almacenamiento y los Data Factory sean únicos a nivel **mundial**. Si no lo cambias, Terraform arrojará un error indicando que el nombre ya está en uso (porque actualmente lo tienes reservado tú).

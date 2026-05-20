@@ -1,8 +1,8 @@
-﻿# Comentado para la Entrega 1 por restricciones de region
+# Comentado para la Entrega 1 por restricciones de region
 resource "azurerm_synapse_workspace" "synapse_ws" {
   name                                 = "syn-ws-dataplatform-dev"
   resource_group_name                  = azurerm_resource_group.rg.name
-  location                             = azurerm_resource_group.rg.location
+  location                             = "canadacentral"
   storage_data_lake_gen2_filesystem_id = azurerm_storage_data_lake_gen2_filesystem.bronze.id
 
   # Cuenta por defecto y credenciales

@@ -1,91 +1,49 @@
--- =========================================================
--- Vistas sobre Data Lake con Serverless SQL Pool en Synapse
--- =========================================================
+-- =============================================================================
+-- CONSULTAS ANALÍTICAS PARA SYNAPSE ANALYTICS SERVERLESS SQL POOL
+-- PROYECTO 09 - CAPA GOLD
+-- =============================================================================
+-- Nota: Estas consultas leen directamente de la capa Gold en el Data Lake.
+-- Asegúrate de que la URL apunte al nombre correcto de tu Storage Account.
+-- =============================================================================
 
--- 1. Crear Vistas sobre la capa Gold apuntando a Parquet
--- Nota: La ruta exacta puede variar según las carpetas dinámicas configuradas
-
-CREATE OR ALTER VIEW vw_gold_telemetry AS
-SELECT
-    *
-FROM
-    OPENROWSET(
-        BULK 'https://stdataplatformdevcx99v2.dfs.core.windows.net/gold/telemetry/**/*.parquet',
-        FORMAT = 'PARQUET'
-    ) AS [result];
-GO
-
-CREATE OR ALTER VIEW vw_silver_alerts AS
-SELECT
-    *
-FROM
-    OPENROWSET(
-        BULK 'https://stdataplatformdevcx99v2.dfs.core.windows.net/silver/alerts/**/*.json',
-        FORMAT = 'CSV', -- A pesar de ser JSON, OPENROWSET los lee como CSV delimitado de campo único donde hay que aplicar PARSE_JSON 
-        FIELDQUOTE = '0x0b',
-        FIELDTERMINATOR ='0x0b',
-        ROWTERMINATOR = '0x0b'
-    )
-    WITH (
-        jsonContent varchar(MAX)
-    ) AS [result]
-CROSS APPLY OPENJSON(jsonContent)
-WITH (
-    event_time DATETIME2,
-    device_id VARCHAR(50),
-    temperature FLOAT,
-    status VARCHAR(20)
-);
-GO
-
--- =========================================================
--- Consultas Analíticas (3 Ejemplos requeridos)
--- =========================================================
-
--- Consulta #1: Tendencia Temporal (Promedio histórico de temperatura por dispositivo por hora)
-SELECT 
-    device_id,
-    CAST(window_end AS DATE) as date_value,
-    DATEPART(HOUR, window_end) as hour_value,
-    AVG(avg_temperature) as mean_hourly_temp,
-    MAX(max_temperature) as max_hourly_temp
-FROM 
-    vw_gold_telemetry
-GROUP BY 
-    device_id,
-    CAST(window_end AS DATE),
-    DATEPART(HOUR, window_end)
-ORDER BY 
-    date_value DESC, 
-    hour_value DESC, 
-    device_id;
-GO
-
--- Consulta #2: Top-N Dispositivos (Top 5 dispositivos con más alertas emitidas en la última semana)
+-- 1. CONSULTA TOP-N: Los 5 dispositivos con la temperatura promedio más alta
 SELECT TOP 5
     device_id,
-    COUNT(*) as total_alerts,
-    MAX(temperature) as peak_temperature_registered
-FROM 
-    vw_silver_alerts
-WHERE 
-    status = 'WARNING' 
-    AND event_time >= DATEADD(day, -7, GETDATE())
-GROUP BY 
-    device_id
-ORDER BY 
-    total_alerts DESC;
-GO
+    avg_temperature,
+    max_humidity
+FROM
+    OPENROWSET(
+        BULK 'https://stdataplatformdevcx99v2.dfs.core.windows.net/gold/*.parquet',
+        FORMAT = 'PARQUET'
+    ) AS [gold_data]
+ORDER BY
+    avg_temperature DESC;
 
--- Consulta #3: Agregación General y Distribución (Estadísticas generales de todo el parque IoT)
+
+-- 2. CONSULTA DE AGREGACIONES GENERALES: Promedio de todo el ecosistema
+SELECT
+    ROUND(AVG(avg_temperature), 2) AS general_avg_temp,
+    ROUND(AVG(max_humidity), 2) AS general_avg_humidity
+FROM
+    OPENROWSET(
+        BULK 'https://stdataplatformdevcx99v2.dfs.core.windows.net/gold/*.parquet',
+        FORMAT = 'PARQUET'
+    ) AS [gold_data];
+
+
+-- 3. CONSULTA DE TENDENCIAS/CATEGORIZACIÓN: Estatus de humedad por dispositivo
 SELECT
     device_id,
-    MIN(avg_temperature) as historical_min_temp,
-    MAX(max_temperature) as historical_max_temp,
-    AVG(avg_humidity) as avg_overall_humidity,
-    SUM(total_events_in_minute) as total_readings_captured
+    max_humidity,
+    CASE 
+        WHEN max_humidity > 60 THEN 'Humedad Crítica'
+        WHEN max_humidity BETWEEN 40 AND 60 THEN 'Operación Normal'
+        ELSE 'Humedad Baja'
+    END AS alert_status
 FROM
-    vw_gold_telemetry
-GROUP BY
-    device_id;
-GO
+    OPENROWSET(
+        BULK 'https://stdataplatformdevcx99v2.dfs.core.windows.net/gold/*.parquet',
+        FORMAT = 'PARQUET'
+    ) AS [gold_data]
+ORDER BY
+    max_humidity DESC;
