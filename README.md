@@ -1,5 +1,8 @@
 # Proyecto: Plataforma de Datos End-to-End en Azure (Arquitectura Lambda/Medallion)
 
+*Grupo*: CTRL-Z.
+
+
 Este proyecto implementa una plataforma de datos moderna y escalable sobre Microsoft Azure empleando Infraestructura como Código (IaC). La arquitectura soporta la ingesta tanto en tiempo real (Streaming) como por lotes (Batch), almacenando información bajo los principios de la Arquitectura Medallón (Bronze, Silver, Gold).
 
 A continuación se detalla el desglose y propósito técnico de cada una de las fases o entregas del proyecto:
@@ -22,7 +25,7 @@ A continuación se detalla el desglose y propósito técnico de cada una de las 
 
 ---
 
-## 🚀 Flujo de Datos y Arquitectura (Lambda)
+## Flujo de Datos y Arquitectura
 
 El siguiente diagrama ilustra cómo viajan los datos desde su origen hasta el modelo de consumo analítico una vez la plataforma está operando:
 
@@ -64,13 +67,12 @@ graph TD
     class K,L analytics;
 ```
 
-### ¿Cómo interpretar el flujo?
 1. **Ingesta:** Los datos entran al ecosistema por dos vías. En tiempo real a través de los Event Hubs (Telemetría IoT) o mediante cargas masivas de datos históricos (Batch Archivos).
 2. **Hot Path (Velocidad):** Stream Analytics evalúa los eventos sin detenerse. Detecta de inmediato si hay una anomalía térmica y deposita conclusiones de minuto a minuto listos para ser consumidos en la Capa *Silver*.
 3. **Cold Path (Profundidad):** Data Factory toma los datos pesados y estructurados de la capa *Bronze* y los hornea a fuego lento mediante transformaciones (DataFlows) subiéndolos a *Silver* y culminando en el estatus dorado (*Gold*).
 4. **Consumo:** Synapse asume su rol de orquestador analítico, leyendo tanto los datos rápidos (Hot Path) como los enriquecidos (Cold Path) para presentarlos listos para cualquier herramienta de Business Intelligence (ej. Power BI).
 
----
-*Si deseas desplegar o interactuar con este proyecto, consulta el documento `docs/deployment_guide.md`.*
+# Reproducir
 
-> ⚠️ **IMPORTANTE PARA REPRODUCIR EL PROYECTO:** Si vas a clonar y desplegar este proyecto en tu propia cuenta de Azure (sea de estudiante o personal), debes abrir el archivo `infrastructure/variables.tf` y cambiar el nombre por defecto de la variable `storage_account_name`. Azure exige que los nombres de las Cuentas de Almacenamiento y los Data Factory sean únicos a nivel **mundial**. Si no lo cambias, Terraform arrojará un error indicando que el nombre ya está en uso (porque actualmente lo tienes reservado tú).
+Consulta el documento `docs/deployment_guide.md`.
+
