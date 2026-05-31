@@ -1,13 +1,13 @@
 # Guía de Ejecución y Despliegue: Plataforma de Datos Azure
 
-Esta guía detalla los pasos cronológicos que debes realizar para desplegar, ejecutar y validar la arquitectura Lambda y Medallion construida en el proyecto.
+Esta guía detalla los pasos que deben ser realizados para desplegar y ejecutar el proyecto.
 
----
+Se deben actualizar las variables listadas `infrastructure/variables.tf`, esto se realiza creando el archivo terraform.tfvars. Se debe actualizar especialmente la variable `storage_account_name`. Azure exige que los nombres de las Cuentas de Almacenamiento y los Data Factory sean únicos a nivel **mundial**. Si no, Terraform arrojará un error indicando que el nombre ya está en uso.
 
 ## Fase 1: Prerrequisitos y Autenticación Azure
 
 ### 1.1 Iniciar sesión en Azure CLI
-Abre la terminal de PowerShell en la carpeta raíz y verifica que tienes instalada la [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli).
+Abre una terminal en la carpeta raíz y verifica que tienes instalada la [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli).
 ```powershell
 az login
 ```
@@ -23,18 +23,13 @@ az account list -o table
 az account set --subscription "<TU_SUBSCRIPTION_ID>"
 ```
 
----
-
-
 ## Fase 2: Despliegue de Infraestructura con Terraform
-
-> **Nota:** Puedes ejecutar este paso desde tu máquina local, usando tu usuario autenticado con `az login`.
 
 ### 2.1 Ajustar Terraform para uso local
 Abre el archivo `infrastructure/providers.tf` y asegúrate de que el proveedor use autenticación por CLI.
 
 ### 2.2 Inicializar y aplicar Terraform
-Ubícate en la carpeta `infrastructure`:
+
 ```powershell
 cd infrastructure
 ```
@@ -63,9 +58,7 @@ Copia el valor que te muestra, por ejemplo:
 ```
 eventhub_connection_string = "Endpoint=sb://<NOMBRE>.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=XXXXXXXXXXXX;EntityPath=<eventhub>"
 ```
-Este valor lo usarás en la configuración del generador de eventos.
-
----
+Este valor es usado en la configuración del generador de eventos de python.
 
 ## Fase 3: Ejecución de Flujos en Tiempo Real (Streaming E2E)
 
@@ -75,30 +68,33 @@ Este valor lo usarás en la configuración del generador de eventos.
 3. Busca el servicio **Stream Analytics Job** con nombre `asa-dataplatform-dev`.
 4. Ábrelo, evalúa que su entrada (*inputs*) y salidas (*outputs*) existan, dale clic al botón **"Start" (Iniciar)** y selecciona **"Now"**.
 
-
 ### 3.2 Correr el Generador de Telemetría (Python)
 1. Instala la librería necesaria para Python:
+
 ```powershell
 cd ..  # Volver a la raíz del proyecto
 pip install azure-eventhub
 ```
 
+de ser necesario, crea un entorno virtual y activalo.
+
 2. Exporta la variable de entorno con la cadena de conexión real que copiaste del paso anterior:
+
 ```powershell
+# en powershell
 $env:EVENT_HUB_CONNECTION_STR="<valor_de_eventhub_connection_string>"
 ```
-Ejemplo:
-```powershell
-$env:EVENT_HUB_CONNECTION_STR="Endpoint=sb://...;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=...;EntityPath=..."
+
+```bash
+# en bash
+export EVENT_HUB_CONNECTION_STR="<valor_de_eventhub_connection_string>"
 ```
 
 3. Ejecuta el generador de eventos:
 ```powershell
 python scripts/telemetry_generator.py
 ```
-Déjalo corriendo al menos 3 a 5 minutos. Luego revisa en el Data Lake (Storage Account `stdataplatformdevcx99`) el contenedor `silver` para validar que se generen archivos.
-
----
+Déjalo corriendo al menos 3 a 5 minutos. Luego revisa en el Data Lake (Storage Account) el contenedor `silver` para validar que se generen archivos.
 
 ## Fase 4: Desencadenar el Flujo Batch (ADF)
 
@@ -119,67 +115,11 @@ Azure Data Factory se despliega solo con el contorno (Factory base), ya que el c
 3. Asegurate de conectarte arriba en la pestaña al pool llamado **"Built-in"** (Serverless SQL Pool).
 4. Corre las sentadas mágicas para validar las 3 consultas (Tendencias, top N, Agregaciones). Si procesaste todo hasta la capa Gold, y dejaste correr el script Python varios minutos junto con el Stream Analytics encendido, vas a obtener tablas en pantalla con análisis tangibles.
 
-### 6. Fase Final: Limpieza (Para no cobrar facturas de Microsoft)
-Una vez presentas o validas el proyecto integral y el flujo batch, apaga Stream Analytics. Si deseas eliminar todo para no generar un centavo adicional de costo:
+### 6. Fase Final: Limpieza
+Una vez presentas o validas el proyecto integral y el flujo batch, apaga Stream Analytics. Para detener y eliminar todo:
 
 ```powershell
 cd infrastructure
 terraform destroy -auto-approve
 ```
 
----
-
-## Guía rápida para probar TODO el proyecto (End-to-End)
-
-### 1. Despliega toda la infraestructura
-```bash
-cd infrastructure
-terraform apply -auto-approve
-```
-- Espera a que termine y copia el valor de `eventhub_connection_string` que aparece al final.
-
-### 2. Inicia el Job de Stream Analytics
-- Ve al portal de Azure, busca el recurso **Stream Analytics Job** (`asa-dataplatform-dev`).
-- Haz clic en **Start** para iniciarlo.
-
-### 3. Ejecuta el generador de eventos (Python)
-- Instala la librería necesaria:
-  ```bash
-  pip install azure-eventhub
-  ```
-- Exporta la variable de entorno con la cadena de conexión:
-  ```powershell
-  $env:EVENT_HUB_CONNECTION_STR="<tu_cadena_de_conexion>"
-  ```
-
-- Ejecuta el script:
-  ```bash
-  python scripts/telemetry_generator.py
-  ```
-- Deja correr el script al menos 2-3 minutos.
-
-### 4. Ejecuta el pipeline batch de Data Factory
-- Ve al portal de Azure > Data Factory (`adf-dataplatform-dev-01`).
-- Sube un archivo CSV de prueba al Storage Account (contenedor de origen definido en tu pipeline).
-- En Data Factory Studio, ejecuta manualmente el pipeline batch (Trigger Now).
-
-### 5. Analiza los datos en Synapse Analytics
-- Ve al portal de Azure > Synapse Analytics Workspace (`syn-ws-dataplatform-dev`).
-- Abre Synapse Studio y carga el notebook `synapse/analytics_notebook.ipynb` o el script SQL.
-- Ejecuta las consultas sobre la capa Gold y Silver.
-
-### 6. Verifica los resultados
-- En el Storage Account, revisa los contenedores `silver` y `gold` para ver los archivos generados.
-- En Synapse, valida que las consultas devuelvan datos coherentes.
-- Si todo esto funciona, ¡el proyecto está probado End-to-End!
-
-### 7. Limpieza (opcional)
-- Cuando termines, destruye los recursos para evitar costos:
-```bash
-cd infrastructure
-terraform destroy -auto-approve
-```
-
-
-
----
